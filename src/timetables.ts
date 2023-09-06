@@ -15,10 +15,47 @@ const getTimetableKey = (stopCode: string, lineId: string, dir: string) =>
 const parseScheduleDetail = (schedules: Schedule[]) => {
   return schedules.flatMap((schedule) => {
     if (!schedule.ScheduleDetail) return [];
-    return schedule.ScheduleDetail.split(" ").map((minute) => ({
-      hour: schedule.Hour,
-      minute: parseInt(minute),
-    }));
+
+    if (schedule.ScheduleDetail.startsWith("Ogni")) {
+      try {
+        //Ogni 7'[17:06*:20*:35*:49*]
+        let matches = schedule.ScheduleDetail
+          .match(/Ogni (\d+)'\[\d+:(\d+)/);
+
+        let interval = 0;
+        let startMinute = 0;
+
+        if (!matches) {
+          //Ogni 7'
+          matches = schedule.ScheduleDetail.match(/Ogni (\d+)'/)
+          if (!matches) return []
+
+          interval = parseInt(matches[1]);
+          startMinute = 0; //TODO: check this, 0 minute is an heuristic
+        } else {
+          interval = parseInt(matches[1]);
+          startMinute = parseInt(matches[2]);
+        }
+
+        const minutes = [];
+        for (let min = startMinute; min < 60; min += interval) {
+            minutes.push(min);
+        };
+        return minutes.map((minute) =>
+          ({hour: schedule.Hour, minute}));
+      } catch (e) {
+        console.log("error parsing scheduleDetail: ", schedule.ScheduleDetail)
+        return []
+      }
+    }
+
+    return schedule.ScheduleDetail
+      .split(" ")
+      .filter((Boolean))
+      .map((minute) => ({
+        hour: schedule.Hour,
+        minute: parseInt(minute),
+      }))
   });
 };
 
@@ -41,6 +78,7 @@ export const updateTimetables = async (
 
   const promises = ids.map(async ({ stopCode, lineId, dir }) =>
     updateSingleTimetable(stopCode, lineId, dir, kv_ATMTimetables)
+      .catch(console.error)
   );
 
   await Promise.allSettled(promises);
@@ -53,6 +91,7 @@ const updateSingleTimetable = async (
   kv_ATMTimetables: KVNamespace<string>
 ) => {
   const timetable = await fetchTimetableData(stopCode, lineId, dir);
+
   const timeSchedules = timetable.TimeSchedules;
 
   const formattedTimeSchedules: Timetable[] = timeSchedules.map(
@@ -80,8 +119,13 @@ export const getTimetable = async (
     await updateSingleTimetable(stopCode, lineId, dir, kv_ATMTimetables);
     json = await kv_ATMTimetables.get(key);
   }
-
   const timeTables: Timetable[] = await JSON.parse(json!);
+  timeTables.forEach((timeTable) => { //cleanup
+    timeTable.schedule = timeTable.schedule.filter(({hour, minute}) =>
+      hour != null && minute != null
+    )
+  });
+
   const day = new Date().getDay();
 
   const timeTable = timeTables.find((timeTable) =>

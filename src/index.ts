@@ -34,6 +34,8 @@ export default {
 		switch (controller.cron) {
 			case "* * * * *":
 				ctx.waitUntil(updateEstimates(env.atm_stops, env.atm_timetables));
+
+				ctx.waitUntil(updateTimetables(env.atm_timetables));
 				break;
 
 			case "1 0 * * *":

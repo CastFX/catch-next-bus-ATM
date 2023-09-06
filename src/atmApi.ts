@@ -215,6 +215,10 @@ export const fetchStopData = async (stopId: string) => {
 		method: "POST",
 	});
 
+	if (response.status !== 200) {
+		console.log("Error while fetching stopId: " + stopId + ", status: " + response.statusText);
+	}
+
 	const data: ATM_LineStatus_Response = await response.json();
 	return data;
 }
@@ -226,6 +230,11 @@ export const fetchTimetableData = async (stopCode: string, lineId: string, dir: 
 		method: "POST",
 	});
 
+	if (response.status !== 200) {
+		console.log("Error while fetching timetable: " + lineId + ", status: " + response.statusText);
+	}
+
 	const data: ATM_Timetable_Response = await response.json();
+
 	return data;
 }

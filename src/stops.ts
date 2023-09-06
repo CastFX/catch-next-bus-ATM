@@ -19,7 +19,7 @@ export type Stop = {
 
 export const nearStops: Stop[] = [
 	{
-		id: "4492753",
+		id: "4591270",
 		name: "Via Mecenate Via Quintiliano",
 		customerCode: "12840",
 		location: {
@@ -36,7 +36,7 @@ export const nearStops: Stop[] = [
 		]
 	},
 	{
-		id: "4492751",
+		id: "4591268",
 		name: "Via Mecenate Via Quintiliano",
 		customerCode: "12838",
 		location: {
@@ -53,14 +53,14 @@ export const nearStops: Stop[] = [
 		]
 	},
 	{
-		id: "4492735",
+		id: "4591252",
 		name: "Via Bonfadini Via del Liri",
 		customerCode: "12813",
 		location: {
 			x: 9.249224547294228,
 			y: 45.44518542887491
 		},
-		lineIds: ["66","88", "688"],
+		lineIds: ["66","88"],
     journeyIds: {main: ["66|1", "88|1"], night: ["Q45|0", "Q88|0"]},
 		minutesFromHome: [
 			{type: "slow", minutes: 3 + 8},
@@ -70,14 +70,14 @@ export const nearStops: Stop[] = [
 		]
 	},
 	{
-		id: "4492736",
+		id: "4591253",
 		name: "L.go Guerrieri Gonzaga",
-		customerCode: "12820",
+		customerCode: "12818",
 		location: {
 			x: 9.250376030678208,
 			y: 45.44532693027197
 		},
-		lineIds: ["66","88", "645", "688"],
+		lineIds: ["66","88"],
     journeyIds: {main: ["66|1", "88|1"], night: ["Q45|0", "Q88|0"]},
 		minutesFromHome: [
 			{type: "slow", minutes: 4 + 9},
@@ -87,7 +87,7 @@ export const nearStops: Stop[] = [
 		]
 	},
 	{
-		id: "4492737",
+		id: "4591254",
 		name: "V.le Ungheria | L.go Guerrieri Gonzaga",
 		customerCode: "12820",
 		location: {

@@ -2,7 +2,7 @@ import { LineStatus, fetchStopData } from "./atmApi";
 import { Stop, getLineStopKey, nearStops } from "./stops";
 import { getTimetable } from "./timetables";
 
-const getMinutesFromNow = (line: LineStatus): number | null => {
+const getMinutesFromNow = (line: LineStatus): number => {
   if (line.WaitMessage) {
     const message = line.WaitMessage.trim().toLowerCase();
 
@@ -14,9 +14,11 @@ const getMinutesFromNow = (line: LineStatus): number | null => {
     } else if (message.includes("ricalcolo")) {
       return 15;
     }
+
+    throw new Error(`Invalid message: ${message}`);
   }
 
-  return null;
+  return -1;
 };
 
 const firstEstimates = (minutesFromNow: number, stop: Stop) => {
@@ -42,11 +44,8 @@ const getSecondAndThirdTimes = async (
   if (!timetable) return [null, null];
 
   const next = timetable.schedule
-    .sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute))
-    .filter(
-      (s) =>
-        (prev.hour === s.hour && prev.minute >= s.minute) || prev.hour > s.hour
-    );
+    .sort(dateChronologically)
+    .filter(isAfterPrevious(prev));
 
   return next.slice(0, 2);
 };
@@ -59,13 +58,10 @@ export const computeTimes = async (
   const minutesFromNow = getMinutesFromNow(line);
 
   const now = new Date(
-    new Date().toLocaleTimeString("it-IT", { timeZone: "Europe/Rome" })
+    new Date().toLocaleString("it-IT", { timeZone: "Europe/Rome" })
   );
 
-  const arrivesAt =
-    minutesFromNow != null
-      ? new Date(now.getTime() + minutesFromNow * 60 * 1000)
-      : now;
+  const arrivesAt = new Date(now.getTime() + minutesFromNow * 60 * 1000);
 
   const arrivingTime = {
     hour: arrivesAt.getHours(),
@@ -100,18 +96,19 @@ export const updateEstimates = async (
   const stopUpdates = nearStops.map(async (stop) => {
     const data = await fetchStopData(stop.id);
 
-    console.log('stopUpdate Data', data);
-
     const lineStatuses = stop.lineIds
       .map((lineId) => data.Lines.find((line) => line.Line.LineId === lineId))
       .filter((line): line is LineStatus => !!line);
 
-    console.log('lineStatuses', lineStatuses);
-
     const kvUpdates = lineStatuses.map((lineStatus) =>
-      computeTimes(lineStatus, stop, kv_ATMTimetables).then((times) =>
-        kv_ATMStops.put(getLineStopKey(lineStatus.Line.LineId, stop.id), times)
-      )
+      computeTimes(lineStatus, stop, kv_ATMTimetables)
+        .then((times) =>
+          kv_ATMStops.put(
+            getLineStopKey(lineStatus.Line.LineId, stop.id),
+            times
+          ))
+        .catch((error) => !error.message.startsWith("Invalid")
+          && console.error("compute times error: ", error.message))
     );
 
     await Promise.allSettled(kvUpdates);
@@ -119,3 +116,12 @@ export const updateEstimates = async (
 
   await Promise.allSettled(stopUpdates);
 };
+
+type Time = { hour: number; minute: number };
+
+const dateChronologically = (a: Time, b: Time) =>
+a.hour * 60 + a.minute - (b.hour * 60 + b.minute)
+
+const isAfterPrevious = (prev: Time) => (next: Time) =>
+(prev.hour === next.hour && next.minute >= prev.minute + 3)
+|| next.hour > prev.hour
