@@ -1,6 +1,6 @@
 # atm-stops-calculator-api
 
-A Cloudflare Worker that runs periodically and fetches timetables and live data from Milan Public Transports API.
+A Cloudflare Worker that runs periodically and fetches timetables and live data from ATM (Milan Public Transports) API.
 It uses the live estimates for bus to estimate the best time to leave the house, and how fast should you run (or cycle) to catch the next bus.
 
 Currently, all relevant bus stops and walking/running estimates are hardcoded, maybe in the future they could be customized.
