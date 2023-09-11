@@ -1,16 +1,35 @@
+import { DrizzleD1Database } from "drizzle-orm/d1";
 import { DaysInfo, Schedule, days, fetchTimetableData } from "./atmApi";
-import { nearStops } from "./stops";
+import { nearStops } from "./config/stops";
+import { Time, now } from "./estimates";
+import { selectByLineStop, timetablesSQL, upsertSingleTimetable } from "./db/timetables";
+import { LineStop, listActive } from "./db/lineStops";
+
+export type DaySchedules = {
+  mondaySchedule: Time[] | null,
+  tuesdaySchedule: Time[] | null,
+  wednesdaySchedule: Time[] | null,
+  thursdaySchedule: Time[] | null,
+  fridaySchedule: Time[] | null,
+  saturdaySchedule: Time[] | null,
+  sundaySchedule: Time[] | null,
+}
 
 export type Timetable = {
-  days: number[];
-  schedule: {
-    hour: number;
-    minute: number;
-  }[];
+  id: number,
+  lineStopId: number,
+  customerCode: string,
+  lineId: string,
+  direction: boolean,
+  fromDate: Date | null,
+  mondaySchedule: Time[] | null,
+  tuesdaySchedule: Time[] | null,
+  wednesdaySchedule: Time[] | null,
+  thursdaySchedule: Time[] | null,
+  fridaySchedule: Time[] | null,
+  saturdaySchedule: Time[] | null,
+  sundaySchedule: Time[] | null,
 };
-
-const getTimetableKey = (stopCode: string, lineId: string, dir: string) =>
-  `${stopCode}|${lineId}|${dir}`;
 
 const parseScheduleDetail = (schedules: Schedule[]) => {
   return schedules.flatMap((schedule) => {
@@ -59,13 +78,8 @@ const parseScheduleDetail = (schedules: Schedule[]) => {
   });
 };
 
-//Sunday = 0, Monday = 1,
-const parseActiveDays = (daysInfo: DaysInfo) => {
-  return days.flatMap((day, i) => (daysInfo[day] ? [i] : []));
-};
-
 export const updateTimetables = async (
-  kv_ATMTimetables: KVNamespace<string>
+  db: DrizzleD1Database<Record<string, never>>
 ) => {
   console.log("updating timetables...");
 
@@ -76,8 +90,11 @@ export const updateTimetables = async (
     })
   );
 
-  const promises = ids.map(async ({ stopCode, lineId, dir }) =>
-    updateSingleTimetable(stopCode, lineId, dir, kv_ATMTimetables)
+  const lineStops = await listActive(db);
+
+
+  const promises = lineStops.map(async (lineStop) =>
+    updateSingleTimetable(lineStop, db)
       .catch(console.error)
   );
 
@@ -85,53 +102,70 @@ export const updateTimetables = async (
 };
 
 const updateSingleTimetable = async (
-  stopCode: string,
-  lineId: string,
-  dir: string,
-  kv_ATMTimetables: KVNamespace<string>
-) => {
-  const timetable = await fetchTimetableData(stopCode, lineId, dir);
+  lineStop: LineStop,
+  db: DrizzleD1Database<Record<string, never>>,
+): Promise<Timetable> => {
+  const atmTimetable =
+    await fetchTimetableData(lineStop.customerCode, lineStop.lineId, lineStop.direction);
 
-  const timeSchedules = timetable.TimeSchedules;
+  const timeSchedules = atmTimetable.TimeSchedules;
+  const fromDate = atmTimetable.FromDate;
 
-  const formattedTimeSchedules: Timetable[] = timeSchedules.map(
-    (timeSchedule) => ({
-      days: parseActiveDays(timeSchedule.DayType),
-      schedule: parseScheduleDetail(timeSchedule.Schedule),
-    })
-  );
+  const schedules: DaySchedules = {
+    mondaySchedule: [] as Time[],
+    tuesdaySchedule: [] as Time[],
+    wednesdaySchedule: [] as Time[],
+    thursdaySchedule: [] as Time[],
+    fridaySchedule: [] as Time[],
+    saturdaySchedule: [] as Time[],
+    sundaySchedule: [] as Time[],
+  }
 
-  await kv_ATMTimetables.put(
-    getTimetableKey(stopCode, lineId, dir),
-    JSON.stringify(formattedTimeSchedules)
-  );
+  week.forEach((day) => {
+    const parseKey = day.charAt(0).toUpperCase() + day.slice(1, 3) as keyof DaysInfo; //Mon, Tue...
+    const timetableKey = day + "Schedule" as keyof typeof schedules;
+
+    const schedule = timeSchedules
+      .find(({DayType}) => DayType[parseKey])
+      ?.Schedule;
+
+    schedules[timetableKey] = schedule
+      ? parseScheduleDetail(schedule)
+      : [];
+  })
+
+  return await upsertSingleTimetable(
+    lineStop,
+    new Date(fromDate),
+    schedules,
+    db
+  )
 };
+
+const parseActiveDaysAsKeys = (daysInfo: DaysInfo) =>
+week
+  .filter(d => {
+    const key = d.charAt(0).toUpperCase() + d.slice(1, 3); //Mon, Tue...
+    return daysInfo[key as keyof DaysInfo]
+  })
+  .map(d => d + "Schedule") //mondaySchedule, ...
 
 export const getTimetable = async (
-  stopCode: string,
-  lineId: string,
-  dir: string,
-  kv_ATMTimetables: KVNamespace<string>
-) => {
-  const key = getTimetableKey(stopCode, lineId, dir);
-  let json = await kv_ATMTimetables.get(key);
-  if (!json) {
-    await updateSingleTimetable(stopCode, lineId, dir, kv_ATMTimetables);
-    json = await kv_ATMTimetables.get(key);
-  }
-  const timeTables: Timetable[] = await JSON.parse(json!);
-  timeTables.forEach((timeTable) => { //cleanup
-    timeTable.schedule = timeTable.schedule.filter(({hour, minute}) =>
-      hour != null && minute != null
-    )
-  });
+  lineStop: LineStop,
+  db: DrizzleD1Database<Record<string, never>>,
+): Promise<Time[]> => {
+  const timetable =
+    await selectByLineStop(lineStop, db)
+    ?? await updateSingleTimetable(lineStop, db)
 
-  const day = new Date().getDay();
-
-  const timeTable = timeTables.find((timeTable) =>
-    timeTable.days.includes(day)
-  );
-  return timeTable;
+  return timetable[getScheduleKey(now().getDay()) as keyof Timetable] as Time[];
 };
+
+
+const week = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+const getScheduleKey = (day: number): string =>
+week[day] + "Schedule";
+
 
 export default updateTimetables;

@@ -1,6 +1,15 @@
-import { LineStatus, fetchStopData } from "./atmApi";
-import { Stop, getLineStopKey, nearStops } from "./stops";
+import { DrizzleD1Database } from "drizzle-orm/d1";
+import { ATM_LineStatus_Response, LineStatus, fetchStopData } from "./atmApi";
 import { getTimetable } from "./timetables";
+import { LineStop, listActive, setLineEstimates } from "./db/lineStops";
+
+export type WalkTime = { type: string, minutes: number };
+
+export type Time = { hour: number; minute: number };
+
+export type Estimate = { type: string, leaveHomeInMinutes: number, doable: boolean, arrivesAt: Date };
+
+export type LineEstimates = { lineId: string, waitMessage?: string, estimates: Estimate[][] };
 
 const getMinutesFromNow = (line: LineStatus): number => {
   if (line.WaitMessage) {
@@ -21,47 +30,56 @@ const getMinutesFromNow = (line: LineStatus): number => {
   return -1;
 };
 
-const firstEstimates = (minutesFromNow: number, stop: Stop) => {
-  const firstEstimates = stop.minutesFromHome.map((home) => ({
+const firstEstimates = (
+  minutesFromNow: number,
+  arrivesAt: Date,
+  lineStop: LineStop,
+): Estimate[] => {
+  return lineStop.minutesFromHome.map((home) => ({
     type: home.type,
-    leaveHomeIn_Minutes: minutesFromNow - home.minutes,
+    leaveHomeInMinutes: minutesFromNow - home.minutes,
     doable: minutesFromNow - home.minutes > 0,
+    arrivesAt,
   }));
-
-  return firstEstimates;
 };
 
 const getSecondAndThirdTimes = async (
   prev: { hour: number; minute: number },
   line: LineStatus,
-  stop: Stop,
-  kv_ATMTimetables: KVNamespace<string>
-) => {
-  const lineId = line.Line.LineCode;
-  const dir = line.Direction;
-  const stopCode = stop.customerCode;
-  const timetable = await getTimetable(stopCode, lineId, dir, kv_ATMTimetables);
-  if (!timetable) return [null, null];
+  lineStop: LineStop,
+  db: DrizzleD1Database<Record<string, never>>,
+): Promise<Estimate[][]> => {
+  if (!lineStop) return [];
+  const timetable = await getTimetable(lineStop, db);
+  if (!timetable) return [];
 
-  const next = timetable.schedule
+  const next = timetable
     .sort(dateChronologically)
     .filter(isAfterPrevious(prev));
 
-  return next.slice(0, 2);
+  return next.slice(0, 2).map((time) =>
+    lineStop.minutesFromHome.map((home) => {
+      const arrivesAt = now()
+      arrivesAt.setHours(time.hour, time.minute);
+      const minutesFromArrival = (arrivesAt.getTime() - now().getTime()) / 60 / 1000;
+      return {
+        type: home.type,
+        leaveHomeInMinutes: minutesFromArrival - home.minutes,
+        doable: minutesFromArrival - home.minutes > 0,
+        arrivesAt,
+      }
+    })
+  );
 };
 
 export const computeTimes = async (
   line: LineStatus,
-  stop: Stop,
-  kv_ATMTimetables: KVNamespace<string>
-) => {
+  lineStop: LineStop,
+  db: DrizzleD1Database<Record<string, never>>,
+): Promise<LineEstimates> => {
   const minutesFromNow = getMinutesFromNow(line);
 
-  const now = new Date(
-    new Date().toLocaleString("it-IT", { timeZone: "Europe/Rome" })
-  );
-
-  const arrivesAt = new Date(now.getTime() + minutesFromNow * 60 * 1000);
+  const arrivesAt = new Date(now().getTime() + minutesFromNow * 60 * 1000);
 
   const arrivingTime = {
     hour: arrivesAt.getHours(),
@@ -69,55 +87,59 @@ export const computeTimes = async (
   };
 
   const first = minutesFromNow != null
-    ? firstEstimates(minutesFromNow, stop)
-    : null;
+    ? firstEstimates(minutesFromNow, arrivesAt, lineStop)
+    : undefined;
   const [second, third] = await getSecondAndThirdTimes(
     arrivingTime,
     line,
-    stop,
-    kv_ATMTimetables
+    lineStop,
+    db,
   );
 
-  return JSON.stringify({
+  return {
     lineId: line.Line.LineId,
-    WaitMessage: line.WaitMessage,
-    first,
-    second,
-    third
-  });
+    waitMessage: line.WaitMessage,
+    estimates: [first, second, third]
+      .filter(Boolean) as Estimate[][],
+  };
 };
 
 export const updateEstimates = async (
-  kv_ATMStops: KVNamespace<string>,
-  kv_ATMTimetables: KVNamespace<string>
+  db: DrizzleD1Database<Record<string, never>>
 ) => {
   console.log("updating estimates...");
 
-  const stopUpdates = nearStops.map(async (stop) => {
-    const data = await fetchStopData(stop.id);
+  const lineStops = await listActive(db);
 
-    const lineStatuses = stop.lineIds
-      .map((lineId) => data.Lines.find((line) => line.Line.LineId === lineId))
-      .filter((line): line is LineStatus => !!line);
+  const cache = {} as { [key: string]: Promise<ATM_LineStatus_Response> };
 
-    const kvUpdates = lineStatuses.map((lineStatus) =>
-      computeTimes(lineStatus, stop, kv_ATMTimetables)
-        .then((times) =>
-          kv_ATMStops.put(
-            getLineStopKey(lineStatus.Line.LineId, stop.id),
-            times
-          ))
-        .catch((error) => !error.message.startsWith("Invalid")
-          && console.error("compute times error: ", error.message))
-    );
+  const stopUpdates = lineStops.map(async (lineStop) => {
+    const promise = lineStop.stopCode in cache
+      ? cache[lineStop.stopCode]
+      : fetchStopData(lineStop.stopCode);
 
-    await Promise.allSettled(kvUpdates);
+    const data = await promise;
+
+    const lineStatus =
+      findLineStatusById(data.Lines, lineStop.lineId);
+
+    if (!lineStatus) return Promise.resolve();
+
+    return computeTimes(lineStatus, lineStop, db)
+      .then((lineEstimates) => setLineEstimates(
+        lineStatus.Line.LineId,
+        lineStop.stopCode,
+        lineEstimates,
+        db,
+      ))
   });
 
   await Promise.allSettled(stopUpdates);
 };
 
-type Time = { hour: number; minute: number };
+export const now = () => new Date(
+  new Date().toLocaleString("it-IT", { timeZone: "Europe/Rome" })
+);
 
 const dateChronologically = (a: Time, b: Time) =>
 a.hour * 60 + a.minute - (b.hour * 60 + b.minute)
@@ -125,3 +147,6 @@ a.hour * 60 + a.minute - (b.hour * 60 + b.minute)
 const isAfterPrevious = (prev: Time) => (next: Time) =>
 (prev.hour === next.hour && next.minute >= prev.minute + 3)
 || next.hour > prev.hour
+
+const findLineStatusById = (lines: LineStatus[], lineId: string): LineStatus | undefined =>
+  lines.find((line) => line.Line.LineId === lineId)

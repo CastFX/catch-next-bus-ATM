@@ -2,15 +2,14 @@ name = "atm-stops-calculator-api"
 main = "src/index.ts"
 compatibility_date = "2023-07-05"
 
-# Configure the Workers KV binding
-kv_namespaces = [
-  { binding = "atm_stops", id = "bc01e579f2ef483b9dcfb45931a206d3", preview_id = "a1a0b0ff8deb4dc8b05956674e7b26b1" },
-  { binding = "atm_timetables", id = "5612961a534849c5b253fec8cd7e693e", preview_id = "8bc3b0e91b684bd7a1bd5878a8bda164" }
-]
-
 # Configure the workers.dev deployment
 workers_dev = true
 
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "catch-next-bus-atm-db"
+database_id = "d3f90bef-2903-4d1a-be35-c977859c07e3"
+# preview_database_id = "d3f90bef-2903-4d1a-be35-c977859c07e3"
 
 [triggers]
 crons = [ "* * * * *", "1 0 * * *"]

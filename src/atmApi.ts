@@ -1,3 +1,5 @@
+import { LineStop } from "./db/lineStops";
+
 export type LineStatus = {
   Line: {
     LineId: string;
@@ -19,7 +21,7 @@ export type LineStatus = {
     Title: string;
     Body: string;
     PublicationDate: string;
-    ExpirationaDate: string;
+    ExpirationDate: string;
   }[];
 };
 
@@ -79,6 +81,35 @@ export type ATM_Timetable_Response = {
   LineCode: string;
   StopCode: string;
   TimeSchedules: WeekSchedule[];
+};
+
+export type ATM_StopInfo_Response = {
+  crs: {
+    type: string,
+    properties: {
+      name: string,
+    },
+  },
+  features: {
+    type: string,
+    properties: {
+      ID: number,
+      IDCategoria: number,
+      X: number,
+      Y: number,
+      Icona: string,
+      ITANome: string,
+    },
+    geometry: {
+      type: string,
+      coordinates: number[],
+    },
+    geometry_name: string,
+    id: string,
+  }[],
+  timeStamp: string,
+  totalFeatures: string|number,
+  type: string,
 };
 
 const example = {
@@ -209,6 +240,31 @@ const stopApiUrl = (stopId: string) =>
 const getTimetableUrl = (stopCode: string, lineId: string, dir: string) =>
   `tpPortal/tpl/stops/${stopCode}/timetable/line/${lineId}/dir/${dir}`;
 
+
+const coord4326To3857 = (location: {x: number, y: number}) => {
+    const X = 20037508.34;
+
+    let long3857 = (location.x * X) / 180;
+
+    let lat3857 = location.y + 90;
+    lat3857 = lat3857 * (Math.PI/360);
+    lat3857 = Math.tan(lat3857);
+    lat3857 = Math.log(lat3857);
+    lat3857 = lat3857 / (Math.PI / 180);
+
+    lat3857 = (lat3857 * X) / 180;
+
+    return {x: long3857, y:lat3857};
+}
+const getStopCodeUrl = (lineStop: LineStop) => {
+  const {bbox, x, y} = lineStop.geoSrvData;
+
+  const url = `geosrv/%3FREQUEST%3DGetFeatureInfo%26EXCEPTIONS%3Dapplication%252Fvnd.ogc.se_xml%26SERVICE%3DWMS%26VERSION%3D1.1.1%26INFO_FORMAT%3Dapplication%252Fjson%26FEATURE_COUNT%3D1%26LAYERS%3DATM%253AvPOI_GiroMilano%26QUERY_LAYERS%3DATM%253AvPOI_GiroMilano%26format%3Dimage%252Fpng%26srs%3DEPSG%253A3857%26BBOX%3D${bbox.join("%252C")}%26WIDTH%3D1166%26HEIGHT%3D335%26x%3D${x}%26y%3D${y}%26CQL_FILTER%3DIDCategoria%2520IN%2520(20)`;
+
+  return url;
+}
+
+
 export const fetchStopData = async (stopId: string) => {
   const response = await fetch(apiUrl, {
     headers,
@@ -232,11 +288,11 @@ export const fetchStopData = async (stopId: string) => {
 export const fetchTimetableData = async (
   stopCode: string,
   lineId: string,
-  dir: string
+  direction: boolean
 ) => {
   const response = await fetch(apiUrl, {
     headers,
-    body: "url=" + getTimetableUrl(stopCode, lineId, dir),
+    body: "url=" + getTimetableUrl(stopCode, lineId, direction ? "1" : "0"),
     method: "POST",
   });
 
@@ -253,3 +309,27 @@ export const fetchTimetableData = async (
 
   return data;
 };
+
+
+export const fetchStopCode = async (lineStop: LineStop) => {
+  const body = "url=" + getStopCodeUrl(lineStop);
+  const response = await fetch(apiUrl, {
+    headers,
+    body,
+    method: "POST",
+  });
+
+  if (response.status !== 200) {
+    console.log(
+      "Error while fetching stopCode: " +
+        lineStop.customerCode +
+        ", status: " +
+        response.statusText
+    );
+  }
+
+  const data = await response.json();
+  console.log(`stopCodeInfo for ${lineStop.lineDescription}`, data);
+
+  return data as ATM_StopInfo_Response;
+}
