@@ -12,5 +12,5 @@ database_id = "d3f90bef-2903-4d1a-be35-c977859c07e3"
 # preview_database_id = "d3f90bef-2903-4d1a-be35-c977859c07e3"
 
 [triggers]
-crons = [ "* * * * *", "1 0 * * *"]
+crons = [ "* 6-23 * * *", "1 0 * * *"]
 
