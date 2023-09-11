@@ -16,12 +16,12 @@ const getMinutesFromNow = (line: LineStatus): number => {
     const message = line.WaitMessage.trim().toLowerCase();
 
     if (message.includes("arrivo")) {
-      return 0;
+      return 1;
     } else if (message.includes("min")) {
       //e.g. "6 min", parseInt("6 min") = 6
       return parseInt(message);
     } else if (message.includes("ricalcolo")) {
-      return 15;
+      return -1;
     }
 
     throw new Error(`Invalid message: ${message}`);
@@ -45,7 +45,6 @@ const firstEstimates = (
 
 const getSecondAndThirdTimes = async (
   prev: { hour: number; minute: number },
-  line: LineStatus,
   lineStop: LineStop,
   db: DrizzleD1Database<Record<string, never>>,
 ): Promise<Estimate[][]> => {
@@ -60,8 +59,10 @@ const getSecondAndThirdTimes = async (
   return next.slice(0, 2).map((time) =>
     lineStop.minutesFromHome.map((home) => {
       const arrivesAt = now()
-      arrivesAt.setHours(time.hour, time.minute);
-      const minutesFromArrival = (arrivesAt.getTime() - now().getTime()) / 60 / 1000;
+      arrivesAt.setHours(time.hour, time.minute, 0);
+      const seconds = (arrivesAt.getTime() - now().getTime()) / 1000;
+      const minutesFromArrival = Math.ceil(seconds / 60);
+
       return {
         type: home.type,
         leaveHomeInMinutes: minutesFromArrival - home.minutes,
@@ -83,7 +84,7 @@ export const computeTimes = async (
 
   const arrivingTime = {
     hour: arrivesAt.getHours(),
-    minute: arrivesAt.getMinutes(),
+    minute: arrivesAt.getUTCMinutes(),
   };
 
   const first = minutesFromNow != null
@@ -91,7 +92,6 @@ export const computeTimes = async (
     : undefined;
   const [second, third] = await getSecondAndThirdTimes(
     arrivingTime,
-    line,
     lineStop,
     db,
   );
@@ -138,7 +138,7 @@ export const updateEstimates = async (
 };
 
 export const now = () => new Date(
-  new Date().toLocaleString("it-IT", { timeZone: "Europe/Rome" })
+  new Date().toLocaleString("en-US", { timeZone: "Europe/Rome" })
 );
 
 const dateChronologically = (a: Time, b: Time) =>
