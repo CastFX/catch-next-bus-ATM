@@ -1,4 +1,4 @@
-name = "atm-stops-calculator-api"
+name = "catch-next-bus-atm"
 main = "src/index.ts"
 compatibility_date = "2023-07-05"
 
