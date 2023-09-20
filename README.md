@@ -7,5 +7,9 @@ Retrieves real-time bus schedules to determine the optimal departure time from y
 A Cloudflare Worker with a cronjob that fetches periodically timetables and live data from ATM (Milan Public Transports) API, which are then manipulated and stored on Cloudflare D1.
 
 ## Future
+- [x] (FE) Stops
+- [x] (FE) Estimates
+- [ ] (FE) Timetables
+
 A frontend application will be needed to fetch the estimates from Cloudflare D1 and render them in a nicer way
 Currently, all relevant bus stops and walking/running estimates are hardcoded, maybe in the future they could be customized.
