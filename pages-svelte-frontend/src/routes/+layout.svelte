@@ -2,10 +2,11 @@
 	import '../app.postcss';
 </script>
 
-<nav>
-	<a href="/">Home</a>
-	<a href="/fetch">Reload</a>
-	<button class="btn" on:click={() => window.location.reload()}>Hello daisyUI</button>
-
-</nav>
-<slot />
+<div class="hero min-h-screen bg-base-200">
+	<div class="hero-content text-center text-neutral-content">
+		<div class="">
+			<h1 class="mb-5 text-5xl font-bold">Catch Next Bus ATM</h1>
+			<slot />
+		</div>
+	</div>
+</div>

@@ -1,15 +1,14 @@
 import { DrizzleD1Database } from "drizzle-orm/d1";
 import { ATM_LineStatus_Response, LineStatus, fetchStopData } from "./atmApi";
 import { getTimetable } from "./timetables";
-import { LineStop, listActive, setLineEstimates } from "./db/lineStops";
-
-export type WalkTime = { type: string, minutes: number };
-
-export type Time = { hour: number; minute: number };
-
-export type Estimate = { type: string, leaveHomeInMinutes: number, doable: boolean, arrivesAt: Date };
-
-export type LineEstimates = { lineId: string, waitMessage?: string, estimates: Estimate[][] };
+import {
+  Estimate,
+  LineEstimates,
+  LineStop,
+  listActive,
+  setLineEstimates,
+} from "./db/lineStops";
+import { Time } from "./db/timetables";
 
 const getMinutesFromNow = (line: LineStatus): number => {
   if (line.WaitMessage) {
@@ -33,7 +32,7 @@ const getMinutesFromNow = (line: LineStatus): number => {
 const firstEstimates = (
   minutesFromNow: number,
   arrivesAt: Date,
-  lineStop: LineStop,
+  lineStop: LineStop
 ): Estimate[] => {
   return lineStop.minutesFromHome.map((home) => ({
     type: home.type,
@@ -46,7 +45,7 @@ const firstEstimates = (
 const getSecondAndThirdTimes = async (
   prev: { hour: number; minute: number },
   lineStop: LineStop,
-  db: DrizzleD1Database<Record<string, never>>,
+  db: DrizzleD1Database<Record<string, never>>
 ): Promise<Estimate[][]> => {
   if (!lineStop) return [];
   const timetable = await getTimetable(lineStop, db);
@@ -58,7 +57,7 @@ const getSecondAndThirdTimes = async (
 
   return next.slice(0, 2).map((time) =>
     lineStop.minutesFromHome.map((home) => {
-      const arrivesAt = now()
+      const arrivesAt = now();
       arrivesAt.setHours(time.hour, time.minute, 0);
       const seconds = (arrivesAt.getTime() - now().getTime()) / 1000;
       const minutesFromArrival = Math.ceil(seconds / 60);
@@ -68,7 +67,7 @@ const getSecondAndThirdTimes = async (
         leaveHomeInMinutes: minutesFromArrival - home.minutes,
         doable: minutesFromArrival - home.minutes > 0,
         arrivesAt,
-      }
+      };
     })
   );
 };
@@ -76,7 +75,7 @@ const getSecondAndThirdTimes = async (
 export const computeTimes = async (
   line: LineStatus,
   lineStop: LineStop,
-  db: DrizzleD1Database<Record<string, never>>,
+  db: DrizzleD1Database<Record<string, never>>
 ): Promise<LineEstimates> => {
   const minutesFromNow = getMinutesFromNow(line);
 
@@ -87,20 +86,20 @@ export const computeTimes = async (
     minute: arrivesAt.getUTCMinutes(),
   };
 
-  const first = minutesFromNow != null
-    ? firstEstimates(minutesFromNow, arrivesAt, lineStop)
-    : undefined;
+  const first =
+    minutesFromNow != null
+      ? firstEstimates(minutesFromNow, arrivesAt, lineStop)
+      : undefined;
   const [second, third] = await getSecondAndThirdTimes(
     arrivingTime,
     lineStop,
-    db,
+    db
   );
 
   return {
     lineId: line.Line.LineId,
     waitMessage: line.WaitMessage,
-    estimates: [first, second, third]
-      .filter(Boolean) as Estimate[][],
+    estimates: [first, second, third].filter(Boolean) as Estimate[][],
   };
 };
 
@@ -114,39 +113,41 @@ export const updateEstimates = async (
   const cache = {} as { [key: string]: Promise<ATM_LineStatus_Response> };
 
   const stopUpdates = lineStops.map(async (lineStop) => {
-    const promise = lineStop.stopCode in cache
-      ? cache[lineStop.stopCode]
-      : fetchStopData(lineStop.stopCode);
+    const promise =
+      lineStop.stopCode in cache
+        ? cache[lineStop.stopCode]
+        : fetchStopData(lineStop.stopCode);
 
     const data = await promise;
 
-    const lineStatus =
-      findLineStatusById(data.Lines, lineStop.lineId);
+    const lineStatus = findLineStatusById(data.Lines, lineStop.lineId);
 
     if (!lineStatus) return Promise.resolve();
 
-    return computeTimes(lineStatus, lineStop, db)
-      .then((lineEstimates) => setLineEstimates(
+    return computeTimes(lineStatus, lineStop, db).then((lineEstimates) =>
+      setLineEstimates(
         lineStatus.Line.LineId,
         lineStop.stopCode,
         lineEstimates,
-        db,
-      ))
+        db
+      )
+    );
   });
 
   await Promise.allSettled(stopUpdates);
 };
 
-export const now = () => new Date(
-  new Date().toLocaleString("en-US", { timeZone: "Europe/Rome" })
-);
+export const now = () =>
+  new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Rome" }));
 
 const dateChronologically = (a: Time, b: Time) =>
-a.hour * 60 + a.minute - (b.hour * 60 + b.minute)
+  a.hour * 60 + a.minute - (b.hour * 60 + b.minute);
 
 const isAfterPrevious = (prev: Time) => (next: Time) =>
-(prev.hour === next.hour && next.minute >= prev.minute + 3)
-|| next.hour > prev.hour
+  (prev.hour === next.hour && next.minute >= prev.minute + 3) ||
+  next.hour > prev.hour;
 
-const findLineStatusById = (lines: LineStatus[], lineId: string): LineStatus | undefined =>
-  lines.find((line) => line.Line.LineId === lineId)
+const findLineStatusById = (
+  lines: LineStatus[],
+  lineId: string
+): LineStatus | undefined => lines.find((line) => line.Line.LineId === lineId);

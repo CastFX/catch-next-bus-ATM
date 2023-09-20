@@ -1,9 +1,35 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { Time } from "../estimates";
 import { LineStop, lineStopsSQL } from "./lineStops";
 import { DrizzleD1Database } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
-import { DaySchedules, Timetable } from "../timetables";
+
+export type Time = { hour: number; minute: number };
+
+export type DaySchedules = {
+  mondaySchedule: Time[] | null,
+  tuesdaySchedule: Time[] | null,
+  wednesdaySchedule: Time[] | null,
+  thursdaySchedule: Time[] | null,
+  fridaySchedule: Time[] | null,
+  saturdaySchedule: Time[] | null,
+  sundaySchedule: Time[] | null,
+}
+
+export type Timetable = {
+  id: number,
+  lineStopId: number,
+  customerCode: string,
+  lineId: string,
+  direction: boolean,
+  fromDate: Date | null,
+  mondaySchedule: Time[] | null,
+  tuesdaySchedule: Time[] | null,
+  wednesdaySchedule: Time[] | null,
+  thursdaySchedule: Time[] | null,
+  fridaySchedule: Time[] | null,
+  saturdaySchedule: Time[] | null,
+  sundaySchedule: Time[] | null,
+};
 
 export const timetablesSQL = sqliteTable("timetables", {
   id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),

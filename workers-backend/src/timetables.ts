@@ -1,35 +1,10 @@
 import { DrizzleD1Database } from "drizzle-orm/d1";
 import { DaysInfo, Schedule, days, fetchTimetableData } from "./atmApi";
 import { nearStops } from "./config/stops";
-import { Time, now } from "./estimates";
-import { selectByLineStop, timetablesSQL, upsertSingleTimetable } from "./db/timetables";
+import { now } from "./estimates";
+import { DaySchedules, Time, Timetable, selectByLineStop, timetablesSQL, upsertSingleTimetable } from "./db/timetables";
 import { LineStop, listActive } from "./db/lineStops";
 
-export type DaySchedules = {
-  mondaySchedule: Time[] | null,
-  tuesdaySchedule: Time[] | null,
-  wednesdaySchedule: Time[] | null,
-  thursdaySchedule: Time[] | null,
-  fridaySchedule: Time[] | null,
-  saturdaySchedule: Time[] | null,
-  sundaySchedule: Time[] | null,
-}
-
-export type Timetable = {
-  id: number,
-  lineStopId: number,
-  customerCode: string,
-  lineId: string,
-  direction: boolean,
-  fromDate: Date | null,
-  mondaySchedule: Time[] | null,
-  tuesdaySchedule: Time[] | null,
-  wednesdaySchedule: Time[] | null,
-  thursdaySchedule: Time[] | null,
-  fridaySchedule: Time[] | null,
-  saturdaySchedule: Time[] | null,
-  sundaySchedule: Time[] | null,
-};
 
 const parseScheduleDetail = (schedules: Schedule[]) => {
   return schedules.flatMap((schedule) => {

@@ -1,13 +1,12 @@
 import { DrizzleD1Database } from "drizzle-orm/d1";
-import { WalkTime } from "../estimates";
-import { LineStop, listActive, setStopCode } from "../db/lineStops";
+import {
+  GeoSrv,
+  LineStop,
+  WalkTime,
+  listActive,
+  setStopCode,
+} from "../db/lineStops";
 import { ATM_StopInfo_Response, fetchStopCode } from "../atmApi";
-
-export type GeoSrv = {
-  bbox: number[],
-  x: number,
-  y: number,
-}
 
 export type Stop = {
   stopCode: string; //suggested to changes
@@ -17,11 +16,11 @@ export type Stop = {
     x: number;
     y: number;
   };
-  geoSrvData: GeoSrv,
+  geoSrvData: GeoSrv;
   lineIds: string[];
   journeyIds: { main: string[]; others?: string[]; night?: string[] };
   minutesFromHome: WalkTime[];
-  active: Boolean,
+  active: Boolean;
 };
 
 export const nearStops: Stop[] = [
@@ -34,7 +33,10 @@ export const nearStops: Stop[] = [
       y: 45.44939909140493,
     },
     geoSrvData: {
-      bbox: [1029369.7832640308,5692311.4391867425,1030762.3703731381,5692711.539256683],
+      bbox: [
+        1029369.7832640308, 5692311.4391867425, 1030762.3703731381,
+        5692711.539256683,
+      ],
       x: 542,
       y: 145,
     },
@@ -46,7 +48,7 @@ export const nearStops: Stop[] = [
       { type: "fast", minutes: 1 + 6 },
       { type: "bike", minutes: 2 + 3 },
     ],
-    active: true,
+    active: false,
   },
   {
     stopCode: "4591268",
@@ -57,7 +59,10 @@ export const nearStops: Stop[] = [
       y: 45.44938063608932,
     },
     geoSrvData: {
-      bbox: [1029369.7832640308,5692311.4391867425,1030762.3703731381,5692711.539256683],
+      bbox: [
+        1029369.7832640308, 5692311.4391867425, 1030762.3703731381,
+        5692711.539256683,
+      ],
       x: 546,
       y: 138,
     },
@@ -69,7 +74,7 @@ export const nearStops: Stop[] = [
       { type: "fast", minutes: 1 + 6 },
       { type: "bike", minutes: 2 + 3 },
     ],
-    active: true,
+    active: false,
   },
   {
     stopCode: "4591252",
@@ -80,7 +85,10 @@ export const nearStops: Stop[] = [
       y: 45.44518542887491,
     },
     geoSrvData: {
-      bbox: [1029519.5502001934,5691607.65775191,1030912.1373093007,5692007.7578218505],
+      bbox: [
+        1029519.5502001934, 5691607.65775191, 1030912.1373093007,
+        5692007.7578218505,
+      ],
       x: 84,
       y: 119,
     },
@@ -103,7 +111,10 @@ export const nearStops: Stop[] = [
       y: 45.44532693027197,
     },
     geoSrvData: {
-      bbox: [1029309.6199754311,5691663.38974433,1030556.8509552581,5692021.727976099],
+      bbox: [
+        1029309.6199754311, 5691663.38974433, 1030556.8509552581,
+        5692021.727976099,
+      ],
       x: 418,
       y: 110,
     },
@@ -126,9 +137,12 @@ export const nearStops: Stop[] = [
       y: 45.446089610956015,
     },
     geoSrvData: {
-      bbox: [1029272.4443194495,5691796.617093201,1030665.0314285568,5692196.717163141],
-      x:497,
-      y:146,
+      bbox: [
+        1029272.4443194495, 5691796.617093201, 1030665.0314285568,
+        5692196.717163141,
+      ],
+      x: 497,
+      y: 146,
     },
     lineIds: ["27", "45"], // "66", "88", "127"],
     journeyIds: {
@@ -146,30 +160,16 @@ export const nearStops: Stop[] = [
   },
 ];
 
-
-export const toSqlInserts = (): string => {
-  let c = 1;
-  return "INSERT INTO lineStops (id, stopCode, customerCode, lineId, lineDescription, direction, journeyPattern, locationX, locationY, geoSrvData, minutesFromHome, isActive)\nVALUES\n" +
-  nearStops.flatMap((stop) =>
-    stop.journeyIds.main.map((journeyId) =>
-      [
-        `(${c++}, '${stop.stopCode}', '${stop.customerCode}', '${journeyId.split("|")[0]}', '${stop.name}', ${parseInt(journeyId.split("|")[1])}, '${journeyId}', ${stop.location.x}, ${stop.location.y}, '${JSON.stringify(stop.geoSrvData)}', '${JSON.stringify(stop.minutesFromHome)}', ${stop.active ? 1 : 0}),`
-      ]
-    )
-  ).join("\n") + ';';
-}
-
-
 export const updateStopCodes = async (
   db: DrizzleD1Database<Record<string, never>>
 ): Promise<void> => {
-  const lineStops = await listActive(db)
+  const lineStops = await listActive(db);
   const promises = lineStops.map((lineStop) =>
-    fetchStopCode(lineStop)
-      .then(info => updateStopCode(info, lineStop, db)))
+    fetchStopCode(lineStop).then((info) => updateStopCode(info, lineStop, db))
+  );
 
   await Promise.allSettled(promises);
-}
+};
 
 const updateStopCode = async (
   data: ATM_StopInfo_Response,
@@ -183,4 +183,4 @@ const updateStopCode = async (
   }
 
   await setStopCode(lineStop, stopCode.toFixed(), db);
-}
+};
