@@ -98,7 +98,7 @@
 	class:modal-open={timetable}
 	on:click|self={() => (timetable = undefined)}
 >
-	<div class="modal-box">
+	<div class="modal-box px-1">
 		<div class="tabs justify-center mb-2">
 			{#each timetableTabs as tab}
 				<button
@@ -112,7 +112,10 @@
 		</div>
 		<div class="justify-center">
 			{#each timetableTabs as tab}
-				<div class="!flex-row card justify-center px-12" class:hidden={activeTimetableTab !== tab}>
+				<div
+					class="!flex-row card justify-center sm:px-12"
+					class:hidden={activeTimetableTab !== tab}
+				>
 					{#each sortTimetableTimes(tab) as chunk}
 						<table class="table table-auto table-xs justify-center">
 							<thead>
