@@ -18,9 +18,10 @@ CREATE TABLE IF NOT EXISTS lineStops (
   waitMessage TEXT,
   trafficBulletins TEXT,
   estimates TEXT,
-  isActive INTEGER
+  isActive INTEGER,
+  lastUpdatedAt INTEGER
 );
-INSERT INTO lineStops (id, stopCode, customerCode, lineId, lineDescription, direction, journeyPattern, locationX, locationY, geoSrvData, minutesFromHome, isActive)
+INSERT INTO lineStops (id, stopCode, customerCode, lineId, lineDescription, direction, journeyPattern, locationX, locationY, geoSrvData, minutesFromHome, isActive, lastUpdatedAt)
 VALUES
 ${nearStops
   .flatMap((stop) =>
@@ -33,7 +34,7 @@ ${nearStops
         stop.location.y
       }, '${JSON.stringify(stop.geoSrvData)}', '${JSON.stringify(
         stop.minutesFromHome
-      )}', ${stop.active ? 1 : 0})`,
+      )}', ${stop.active ? 1 : 0}, ${new Date().getTime()})`,
     ])
   )
   .join(",\n")};
