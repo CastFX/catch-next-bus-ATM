@@ -6,6 +6,7 @@
 
 	export let data: PageData;
 
+	let timeToReachOpen = false;
 
 	const timerKey = (stop: string, lineIdx: number, estimateIdx: number) => stop + "|" + lineIdx + "|" + estimateIdx
 
@@ -57,16 +58,8 @@
 		invalidateAll().then(() => timers = initTimers())
 	}, 60000)
 
-	const sortLines = (lines: LineStop[]) => _.orderBy(
-		lines,
-		line => line.waitMessage?.includes("arrivo")
-			? 0
-			: line.waitMessage?.includes("min")
-				? parseInt(line.waitMessage)
-				: Infinity
-		)
-
 	const toTime = (date: string|Date) => {
+		if (typeof date === 'string') date = date.replace("Z", "");
 		const [hours, minutes] = new Date(date).toLocaleTimeString().split(":");
 		return hours + ":" + minutes;
 	}
@@ -76,14 +69,14 @@
 
 <div class="flex flex-wrap flex-row justify-center">
 	{#each Object.entries(data.lineStops) as [stop, lines]}
-		<div class="card w-96 bg-base-100 shadow-xl ml-2 mb-2">
+		<div class="card card-compact	card-bordered w-96 bg-base-100 shadow-xl ml-2 mb-2">
 			<div class="card-body">
 				<h2 class="text-lg card-title justify-center">
 					{stop}
 				</h2>
 				<div class="flex flex-col justify-between h-full">
 					<div class="card-actions justify-center">
-						{#each sortLines(lines) as line, l}
+						{#each lines as line, l}
 						<div class="justify-center w-full">
 							<h3 class="text-lg mb-2 divider">
 								{line.direction ? '↑' : '↓'}{line.lineId}: <b>{line.waitMessage ?? '---'}</b>
@@ -109,9 +102,10 @@
 						</div>
 						{/each}
 					</div>
-					<div>
-						<p class="divider mb-2 mt-6">Time to reach</p>
-						<div class="card-actions justify-between">
+					<div class="!cursor-pointer collapse {timeToReachOpen ? 'collapse-open' : 'collapse-close'}">
+						<input type="checkbox" on:change={(_) => timeToReachOpen = !timeToReachOpen}/>
+						<div class="divider collapse-title mb-0 pb-0 mt-6">Time to reach</div>
+						<div class="card-actions justify-between collapse-content">
 							{#each lines[0].minutesFromHome as velocity}
 								<p>{velocity.type}: {velocity.minutes} minutes</p>
 							{/each}
