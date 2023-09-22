@@ -9,7 +9,9 @@ A Cloudflare Worker with a cronjob that fetches periodically timetables and live
 ## Future
 - [x] (FE) Stops
 - [x] (FE) Estimates
-- [ ] (FE) Timetables
+- [x] (FE) Timetables
+- [ ] (BE+FE) Customizable stops
+- [ ] (BE+FE) GPS Based nearby stops
 
 A frontend application will be needed to fetch the estimates from Cloudflare D1 and render them in a nicer way
 Currently, all relevant bus stops and walking/running estimates are hardcoded, maybe in the future they could be customized.
