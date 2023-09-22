@@ -19,9 +19,7 @@ export async function load({ platform }) {
 
 const sortLines = (lines: LineStop[]) => _.orderBy(
 	lines,
-	line => line.waitMessage?.includes("arrivo")
-		? 0
-		: line.waitMessage?.includes("min")
-			? parseInt(line.waitMessage)
-			: Infinity
+	line => line.waitMessage === null
+		? Infinity
+		: line.lineDescription + line.journeyPattern
 	)
