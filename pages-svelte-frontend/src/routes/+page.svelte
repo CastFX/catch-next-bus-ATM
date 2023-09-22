@@ -69,9 +69,9 @@
 
 <div class="flex flex-wrap flex-row justify-center">
 	{#each Object.entries(data.lineStops) as [stop, lines]}
-		<div class="card card-compact	card-bordered w-96 bg-base-100 shadow-xl ml-2 mb-2">
+		<div class="card card-compact	card-bordered w-80 bg-base-100 shadow-xl ml-2 mb-2">
 			<div class="card-body">
-				<h2 class="text-lg card-title justify-center">
+				<h2 class="text-base font-bold tracking-tighter card-title justify-center">
 					{stop}
 				</h2>
 				<div class="flex flex-col justify-between h-full">
@@ -104,7 +104,7 @@
 					</div>
 					<div class="!cursor-pointer collapse {timeToReachOpen ? 'collapse-open' : 'collapse-close'}">
 						<input type="checkbox" on:change={(_) => timeToReachOpen = !timeToReachOpen}/>
-						<div class="divider collapse-title mb-0 pb-0 mt-6">Time to reach</div>
+						<div class="divider collapse-title my-0 py-0 px-0 text-lg justify-center">Time to reach</div>
 						<div class="card-actions justify-between collapse-content">
 							{#each lines[0].minutesFromHome as velocity}
 								<p>{velocity.type}: {velocity.minutes} minutes</p>
