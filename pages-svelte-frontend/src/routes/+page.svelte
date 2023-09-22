@@ -1,10 +1,9 @@
 <script lang="ts">
-	import _, { chunk, sortBy } from 'lodash';
+	import _ from 'lodash';
 	import type { PageData } from './$types';
 	import type { Estimate, LineStop } from '$lib/server/db/lineStops';
 	import { getDayType, initTimers, startTimers, timerKey, type Timers } from '$lib/timers';
 	import type { TimetableData, TimetableDay } from './+page.server';
-	import { time } from 'drizzle-orm/mysql-core';
 
 	export let data: PageData;
 
