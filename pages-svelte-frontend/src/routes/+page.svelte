@@ -67,9 +67,9 @@
 	const notReachable = (estimates: Estimate[]) => _.every(estimates, ['doable', false])
 </script>
 
-<div class="flex flex-wrap flex-row justify-center">
+<div class="flex flex-wrap flex-row justify-center space-x-2">
 	{#each Object.entries(data.lineStops) as [stop, lines]}
-		<div class="card card-compact	card-bordered w-80 bg-base-100 shadow-xl ml-2 mb-2">
+		<div class="card card-compact	card-bordered w-80 bg-base-100 shadow-xl mb-2">
 			<div class="card-body">
 				<h2 class="text-base font-bold tracking-tighter card-title justify-center">
 					{stop}
