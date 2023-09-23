@@ -2,8 +2,9 @@
 	import _ from 'lodash';
 	import type { PageData } from './$types';
 	import type { Estimate, LineStop } from '$lib/server/db/lineStops';
-	import { getDayType, initTimers, startTimers, timerKey, type Timers } from '$lib/timers';
+	import { getDayType, initTimers, decreaseTimers, timerKey, type Timers } from '$lib/timers';
 	import type { TimetableData, TimetableDay } from './+page.server';
+	import { onMount } from 'svelte';
 
 	export let data: PageData;
 
@@ -12,7 +13,7 @@
 	const timetableTabs: TimetableDay[] = ['weekday', 'saturday', 'sunday'];
 	let activeTimetableTab: TimetableDay = getDayType();
 	let timers: Timers = initTimers(data.lineStops);
-	startTimers(timers);
+	onMount(() => setInterval(() => (timers = decreaseTimers(timers)), 1000));
 
 	const toTime = (date: string | Date) => {
 		if (typeof date === 'string') date = date.replace('Z', '');

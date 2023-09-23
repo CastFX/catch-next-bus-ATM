@@ -23,23 +23,22 @@ export const initTimers = (lineStops: _.Dictionary<LineStop[]>) =>
 		return acc;
 	}, {} as { [key: string]: Timer });
 
-export const startTimers = (timers: Timers) =>
-	setInterval(() => {
-		Object.values(timers).forEach((t) => {
-			t.seconds--;
-			if (t.seconds < 0) {
-				t.minutes--;
-				if (t.minutes < 0) {
-					t.minutes = 0;
-					t.seconds = 0;
-				} else {
-					t.seconds = 59;
-				}
+export const decreaseTimers = (timers: Timers) => {
+	Object.values(timers).forEach((t) => {
+		t.seconds--;
+		if (t.seconds < 0) {
+			t.minutes--;
+			if (t.minutes < 0) {
+				t.minutes = 0;
+				t.seconds = 0;
+			} else {
+				t.seconds = 59;
 			}
-		});
-		// eslint-disable-next-line no-self-assign
-		timers = timers;
-	}, 1000);
+		}
+	});
+
+	return timers;
+};
 
 export const getDayType = () => {
 	const dayOfWeek = new Date().getDay();
