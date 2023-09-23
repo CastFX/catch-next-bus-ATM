@@ -44,7 +44,7 @@ export const nearStops: Stop[] = [
     journeyIds: { main: ["27|0"] },
     minutesFromHome: [
       { type: "slow", minutes: 3 + 10 },
-      { type: "normal", minutes: 2 + 8 },
+      { type: "walk", minutes: 2 + 8 },
       { type: "fast", minutes: 1 + 6 },
       { type: "bike", minutes: 2 + 3 },
     ],
@@ -70,7 +70,7 @@ export const nearStops: Stop[] = [
     journeyIds: { main: ["27|1"] },
     minutesFromHome: [
       { type: "slow", minutes: 3 + 10 },
-      { type: "normal", minutes: 2 + 8 },
+      { type: "walk", minutes: 2 + 8 },
       { type: "fast", minutes: 1 + 6 },
       { type: "bike", minutes: 2 + 3 },
     ],
@@ -96,7 +96,7 @@ export const nearStops: Stop[] = [
     journeyIds: { main: ["66|1", "88|1"], night: ["Q45|0", "Q88|0"] },
     minutesFromHome: [
       { type: "slow", minutes: 3 + 8 },
-      { type: "normal", minutes: 2 + 6 },
+      { type: "walk", minutes: 2 + 6 },
       { type: "fast", minutes: 1 + 4 },
       { type: "bike", minutes: 2 + 3 },
     ],
@@ -122,7 +122,7 @@ export const nearStops: Stop[] = [
     journeyIds: { main: ["66|1", "88|1"], night: ["Q45|0", "Q88|0"] },
     minutesFromHome: [
       { type: "slow", minutes: 4 + 9 },
-      { type: "normal", minutes: 3 + 7 },
+      { type: "walk", minutes: 3 + 7 },
       { type: "fast", minutes: 1 + 5 },
       { type: "bike", minutes: 2 + 3 },
     ],
@@ -152,7 +152,7 @@ export const nearStops: Stop[] = [
     },
     minutesFromHome: [
       { type: "slow", minutes: 3 + 8 },
-      { type: "normal", minutes: 2 + 6 },
+      { type: "walk", minutes: 2 + 6 },
       { type: "fast", minutes: 1 + 4 },
       { type: "bike", minutes: 2 + 3 },
     ],
