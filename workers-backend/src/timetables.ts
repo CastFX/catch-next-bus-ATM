@@ -137,7 +137,7 @@ export const getTimetable = async (
 };
 
 
-const week = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const week = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 const getScheduleKey = (day: number): string =>
 week[day] + "Schedule";
