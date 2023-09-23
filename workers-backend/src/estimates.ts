@@ -18,7 +18,7 @@ const getMinutesFromNow = (line: LineStatus): number => {
       return 1;
     } else if (message.includes("min")) {
       //e.g. "6 min", parseInt("6 min") = 6
-      return parseInt(message);
+      return parseInt(message.replace("sup", ""));
     } else if (message.includes("ricalcolo")) {
       return -1;
     }
