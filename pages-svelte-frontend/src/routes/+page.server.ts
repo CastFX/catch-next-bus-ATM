@@ -22,9 +22,7 @@ export async function load({ platform }) {
 }
 
 const sortLines = (lines: LineStop[]) =>
-	_.orderBy(lines, (line) =>
-		line.waitMessage === null ? Infinity : line.lineDescription + line.journeyPattern
-	);
+	_.orderBy(lines, ['lineDescription', 'waitMessage'], ['asc', 'asc']);
 
 const timetablesByLineStopId = (timetables: Timetable[]) =>
 	timetables.reduce((acc, timetable) => {

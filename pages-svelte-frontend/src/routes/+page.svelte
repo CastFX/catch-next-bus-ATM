@@ -5,6 +5,7 @@
 	import { getDayType, initTimers, decreaseTimers, timerKey, type Timers } from '$lib/timers';
 	import type { TimetableData, TimetableDay } from './+page.server';
 	import { onMount } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
 
 	export let data: PageData;
 
@@ -13,7 +14,11 @@
 	const timetableTabs: TimetableDay[] = ['weekday', 'saturday', 'sunday'];
 	let activeTimetableTab: TimetableDay = getDayType();
 	let timers: Timers = initTimers(data.lineStops);
-	onMount(() => setInterval(() => (timers = decreaseTimers(timers)), 1000));
+
+	onMount(() => {
+		setInterval(() => timers = decreaseTimers(timers, data.lineStops), 1000);
+		setInterval(() => invalidateAll().then(() => timers = initTimers(data.lineStops)), 1000 * 60 + 50);
+	});
 
 	const toTime = (date: string | Date) => {
 		if (typeof date === 'string') date = date.replace('Z', '');
