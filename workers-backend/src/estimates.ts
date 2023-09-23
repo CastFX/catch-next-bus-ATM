@@ -144,7 +144,7 @@ const dateChronologically = (a: Time, b: Time) =>
   a.hour * 60 + a.minute - (b.hour * 60 + b.minute);
 
 const isAfterPrevious = (prev: Time) => (next: Time) =>
-  (prev.hour === next.hour && next.minute >= prev.minute + 3) ||
+  (prev.hour === next.hour && next.minute >= prev.minute + 5) ||
   next.hour > prev.hour;
 
 const findLineStatusById = (
