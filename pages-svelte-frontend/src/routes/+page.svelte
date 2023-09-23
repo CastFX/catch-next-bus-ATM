@@ -22,7 +22,7 @@
 
 	const toTime = (date: string | Date) => {
 		if (typeof date === 'string') date = date.replace('Z', '');
-		const [hours, minutes] = new Date(date).toLocaleTimeString().split(':');
+		const [hours, minutes] = new Date(date).toLocaleTimeString('it-IT').split(':');
 		return hours + ':' + minutes;
 	};
 
