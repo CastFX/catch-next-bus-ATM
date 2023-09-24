@@ -37,7 +37,7 @@ const firstEstimates = (
 ): Estimate[] => {
   return lineStop.minutesFromHome.map((home) => ({
     type: home.type,
-    leaveHomeInMinutes: minutesFromNow - home.minutes,
+    leaveHomeInMinutes: Math.floor(minutesFromNow - home.minutes),
     doable: minutesFromNow - home.minutes > 0,
     arrivesAt,
   }));
@@ -62,7 +62,9 @@ const getSecondAndThirdTimes = async (
         .setZone("Europe/Rome")
         .set({ hour: time.hour, minute: time.minute, second: 0 });
 
-      const minutesFromArrival = arrivesAt.diffNow("minutes").minutes;
+      const minutesFromArrival = Math.floor(
+        arrivesAt.diffNow("minutes").minutes
+      );
 
       return {
         type: home.type,
@@ -81,22 +83,16 @@ export const computeTimes = async (
 ): Promise<LineEstimates> => {
   const minutesFromNow = getMinutesFromNow(line);
 
-  const arrivesAt = new Date(now().getTime() + minutesFromNow * 60 * 1000);
-
-  const arrivingTime = {
-    hour: arrivesAt.getHours(),
-    minute: arrivesAt.getUTCMinutes(),
-  };
+  // const arrivesAt = new Date(now().getTime() + minutesFromNow * 60 * 1000);
+  const arrivesAt = DateTime.now()
+    .setZone("Europe/Rome")
+    .plus({ minutes: minutesFromNow });
 
   const first =
     minutesFromNow != null
-      ? firstEstimates(minutesFromNow, arrivesAt, lineStop)
+      ? firstEstimates(minutesFromNow, arrivesAt.toJSDate(), lineStop)
       : undefined;
-  const [second, third] = await getSecondAndThirdTimes(
-    arrivingTime,
-    lineStop,
-    db
-  );
+  const [second, third] = await getSecondAndThirdTimes(arrivesAt, lineStop, db);
 
   return {
     lineId: line.Line.LineId,
