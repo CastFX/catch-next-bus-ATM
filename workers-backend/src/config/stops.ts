@@ -144,10 +144,10 @@ export const nearStops: Stop[] = [
       x: 497,
       y: 146,
     },
-    lineIds: ["27", "45"], // "66", "88", "127"],
+    lineIds: ["161", "45"], //"27" "66", "88", "127"],
     journeyIds: {
-      main: ["27|1", "45|1"],
-      others: ["66|0", "88|0"],
+      main: ["B27|1", "45|1"],
+      others: ["27|1", "66|0", "88|0"],
       night: ["N27|0"],
     },
     minutesFromHome: [
