@@ -16,12 +16,14 @@
 	let timers: Timers = initTimers(data.lineStops);
 
 	onMount(() => {
-		setInterval(() => timers = decreaseTimers(timers, data.lineStops), 1000);
-		setInterval(() => invalidateAll().then(() => timers = initTimers(data.lineStops)), 1000 * 60 + 50);
+		setInterval(() => (timers = decreaseTimers(timers, data.lineStops)), 1000);
+		setInterval(
+			() => invalidateAll().then(() => (timers = initTimers(data.lineStops))),
+			1000 * 60 + 50
+		);
 	});
 
 	const toTime = (date: string | Date) => {
-		if (typeof date === 'string') date = date.replace('Z', '');
 		const [hours, minutes] = new Date(date).toLocaleTimeString('it-IT').split(':');
 		return hours + ':' + minutes;
 	};
@@ -55,7 +57,8 @@
 							<div class="justify-center w-full">
 								<!-- svelte-ignore a11y-click-events-have-key-events -->
 								<h3 class="text-lg mb-2 divider" on:click={() => prepareTimetable(line)}>
-									{line.direction ? '↑' : '↓'}{line.lineId}: <b>{line.waitMessage ?? '---'}</b>
+									{line.direction ? '↑' : '↓'}{line.journeyPattern.split('|')[0]}:
+									<b>{line.waitMessage ?? '---'}</b>
 								</h3>
 								<table class="table table-sm w-full">
 									<tbody>

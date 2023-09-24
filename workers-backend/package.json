@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230518.0",
+    "@types/luxon": "^3.3.2",
     "typescript": "^5.1.6",
     "wrangler": "^3.7.0"
   },
@@ -12,6 +13,7 @@
     "deploy": "wrangler publish"
   },
   "dependencies": {
-    "drizzle-orm": "^0.28.6"
+    "drizzle-orm": "^0.28.6",
+    "luxon": "^3.4.3"
   }
 }

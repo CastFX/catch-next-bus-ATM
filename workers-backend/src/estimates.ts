@@ -9,6 +9,7 @@ import {
   setLineEstimates,
 } from "./db/lineStops";
 import { Time } from "./db/timetables";
+import { DateTime } from "luxon";
 
 const getMinutesFromNow = (line: LineStatus): number => {
   if (line.WaitMessage) {
@@ -57,16 +58,17 @@ const getSecondAndThirdTimes = async (
 
   return next.slice(0, 2).map((time) =>
     lineStop.minutesFromHome.map((home) => {
-      const arrivesAt = now();
-      arrivesAt.setHours(time.hour, time.minute, 0);
-      const seconds = (arrivesAt.getTime() - now().getTime()) / 1000;
-      const minutesFromArrival = Math.ceil(seconds / 60);
+      const arrivesAt = DateTime.now()
+        .setZone("Europe/Rome")
+        .set({ hour: time.hour, minute: time.minute, second: 0 });
+
+      const minutesFromArrival = arrivesAt.diffNow("minutes").minutes;
 
       return {
         type: home.type,
         leaveHomeInMinutes: minutesFromArrival - home.minutes,
         doable: minutesFromArrival - home.minutes > 0,
-        arrivesAt,
+        arrivesAt: arrivesAt.toJSDate(),
       };
     })
   );
@@ -123,7 +125,7 @@ export const updateEstimates = async (
     const data = await promise;
 
     const lineStatus = findLineStatusById(data.Lines, lineStop.lineId);
-    console.log(lineStatus, lineStop.lineId)
+    console.log(lineStatus, lineStop.lineId);
 
     if (!lineStatus) return Promise.resolve();
 
