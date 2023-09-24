@@ -25,9 +25,9 @@ INSERT INTO lineStops (id, stopCode, customerCode, lineId, lineDescription, dire
 VALUES
 ${nearStops
   .flatMap((stop) =>
-    stop.journeyIds.main.map((journeyId) => [
+    stop.journeyIds.main.map((journeyId, i) => [
       `(${c++}, '${stop.stopCode}', '${stop.customerCode}', '${
-        journeyId.split("|")[0]
+        stop.lineIds[journeyId]
       }', '${stop.name}', ${parseInt(
         journeyId.split("|")[1]
       )}, '${journeyId}', ${stop.location.x}, ${

@@ -240,21 +240,6 @@ const stopApiUrl = (stopId: string) =>
 const getTimetableUrl = (stopCode: string, lineId: string, dir: string) =>
   `tpPortal/tpl/stops/${stopCode}/timetable/line/${lineId}/dir/${dir}`;
 
-const coord4326To3857 = (location: { x: number; y: number }) => {
-  const X = 20037508.34;
-
-  let long3857 = (location.x * X) / 180;
-
-  let lat3857 = location.y + 90;
-  lat3857 = lat3857 * (Math.PI / 360);
-  lat3857 = Math.tan(lat3857);
-  lat3857 = Math.log(lat3857);
-  lat3857 = lat3857 / (Math.PI / 180);
-
-  lat3857 = (lat3857 * X) / 180;
-
-  return { x: long3857, y: lat3857 };
-};
 const getStopCodeUrl = (lineStop: LineStop) => {
   const { bbox, x, y } = lineStop.geoSrvData;
 

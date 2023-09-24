@@ -118,9 +118,12 @@ export const updateEstimates = async (
         ? cache[lineStop.stopCode]
         : fetchStopData(lineStop.stopCode);
 
+    cache[lineStop.stopCode] = promise;
+
     const data = await promise;
 
     const lineStatus = findLineStatusById(data.Lines, lineStop.lineId);
+    console.log(lineStatus, lineStop.lineId)
 
     if (!lineStatus) return Promise.resolve();
 

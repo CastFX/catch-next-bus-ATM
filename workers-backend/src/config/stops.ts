@@ -17,7 +17,7 @@ export type Stop = {
     y: number;
   };
   geoSrvData: GeoSrv;
-  lineIds: string[];
+  lineIds: { [key: string]: string };
   journeyIds: { main: string[]; others?: string[]; night?: string[] };
   minutesFromHome: WalkTime[];
   active: Boolean;
@@ -40,7 +40,7 @@ export const nearStops: Stop[] = [
       x: 542,
       y: 145,
     },
-    lineIds: ["27"],
+    lineIds: { "27|0": "27" },
     journeyIds: { main: ["27|0"] },
     minutesFromHome: [
       { type: "slow", minutes: 3 + 10 },
@@ -66,7 +66,7 @@ export const nearStops: Stop[] = [
       x: 546,
       y: 138,
     },
-    lineIds: ["27"],
+    lineIds: { "27|1": "27" },
     journeyIds: { main: ["27|1"] },
     minutesFromHome: [
       { type: "slow", minutes: 3 + 10 },
@@ -92,7 +92,7 @@ export const nearStops: Stop[] = [
       x: 84,
       y: 119,
     },
-    lineIds: ["66", "88"],
+    lineIds: { "66|1": "66", "88|1": "88" },
     journeyIds: { main: ["66|1", "88|1"], night: ["Q45|0", "Q88|0"] },
     minutesFromHome: [
       { type: "slow", minutes: 3 + 8 },
@@ -118,7 +118,7 @@ export const nearStops: Stop[] = [
       x: 418,
       y: 110,
     },
-    lineIds: ["66", "88"],
+    lineIds: { "66|1": "66", "88|1": "88" },
     journeyIds: { main: ["66|1", "88|1"], night: ["Q45|0", "Q88|0"] },
     minutesFromHome: [
       { type: "slow", minutes: 4 + 9 },
@@ -144,7 +144,7 @@ export const nearStops: Stop[] = [
       x: 497,
       y: 146,
     },
-    lineIds: ["161", "45"], //"27" "66", "88", "127"],
+    lineIds: { "B27|1": "161", "45|1": "45" }, //"27" "66", "88", "127"],
     journeyIds: {
       main: ["B27|1", "45|1"],
       others: ["27|1", "66|0", "88|0"],
