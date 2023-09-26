@@ -56,10 +56,12 @@
 						{#each lines as line, l}
 							<div class="justify-center w-full">
 								<!-- svelte-ignore a11y-click-events-have-key-events -->
-								<h3 class="text-lg mb-2 divider" on:click={() => prepareTimetable(line)}>
-									{line.direction ? '↑' : '↓'}{line.journeyPattern.split('|')[0]}:
-									<b>{line.waitMessage ?? '---'}</b>
-								</h3>
+								<div class="flex w-full cursor-pointer divider justify-center mb-2">
+									<h3 class="text-lg w-full text-center" on:click={() => prepareTimetable(line)}>
+										{line.direction ? '↑' : '↓'}{line.journeyPattern.split('|')[0]}:
+										<b>{line.waitMessage ?? '---'}</b>
+									</h3>
+								</div>
 								<table class="table table-sm w-full">
 									<tbody>
 										{#each line.estimates ?? [] as estimates, e}
@@ -80,10 +82,12 @@
 							</div>
 						{/each}
 					</div>
-					<div
-						class="!cursor-pointer collapse {timeToReachOpen ? 'collapse-open' : 'collapse-close'}"
-					>
-						<input type="checkbox" on:change={(_) => (timeToReachOpen = !timeToReachOpen)} />
+					<div class="collapse {timeToReachOpen ? 'collapse-open' : 'collapse-close'}">
+						<input
+							class="cursor-pointer"
+							type="checkbox"
+							on:change={(_) => (timeToReachOpen = !timeToReachOpen)}
+						/>
 						<div class="divider collapse-title my-0 py-0 px-0 text-lg justify-center">
 							Time to reach
 						</div>
