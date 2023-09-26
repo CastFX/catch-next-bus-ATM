@@ -126,7 +126,7 @@ export const updateEstimates = async (
       if ((e as Error).message === "stop_not_found") {
         await updateStopCodes(db);
       }
-      return;
+      throw e;
     }
 
     const lineStatus = findLineStatusById(data.Lines, lineStop.lineId);
