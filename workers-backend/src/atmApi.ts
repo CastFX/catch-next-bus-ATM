@@ -1,3 +1,4 @@
+import { updateStopCodes } from "./config/stops";
 import { LineStop } from "./db/lineStops";
 
 export type LineStatus = {
@@ -264,6 +265,10 @@ export const fetchStopData = async (stopId: string) => {
         ", status: " +
         response.statusText
     );
+  }
+
+  if (response.status === 404) {
+    throw new Error("stop_not_found");
   }
 
   const data: ATM_LineStatus_Response = await response.json();

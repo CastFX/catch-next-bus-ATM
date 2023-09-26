@@ -10,6 +10,7 @@ import {
 } from "./db/lineStops";
 import { Time } from "./db/timetables";
 import { DateTime } from "luxon";
+import { updateStopCodes } from "./config/stops";
 
 const getMinutesFromNow = (line: LineStatus): number => {
   if (line.WaitMessage) {
@@ -118,7 +119,15 @@ export const updateEstimates = async (
 
     cache[lineStop.stopCode] = promise;
 
-    const data = await promise;
+    let data: ATM_LineStatus_Response;
+    try {
+      data = await promise;
+    } catch (e) {
+      if ((e as Error).message === "stop_not_found") {
+        await updateStopCodes(db);
+      }
+      return;
+    }
 
     const lineStatus = findLineStatusById(data.Lines, lineStop.lineId);
     console.log(lineStatus, lineStop.lineId);
@@ -135,7 +144,7 @@ export const updateEstimates = async (
     );
   });
 
-  await Promise.allSettled(stopUpdates);
+  await Promise.all(stopUpdates);
 };
 
 export const now = () =>
